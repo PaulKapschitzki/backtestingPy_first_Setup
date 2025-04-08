@@ -31,37 +31,48 @@ class SmaCross(Strategy):
 #     data = yf.download(ticker, start=start, end=end)
 #     data = data[['Open', 'High', 'Low', 'Close', 'Volume']]
 #     return data
-def download_daily_data(tickers, start_date, end_date):
+def download_daily_data(ticker, start_date, end_date):
     """
-    Download daily stock data for the given tickers and date range.
+    Download daily stock data for the given ticker and date range.
     
     Parameters:
-    - tickers: List of stock tickers to download data for.
+    - ticker: Stock ticker to download data for.
     - start_date: Start date for the data download (YYYY-MM-DD).
     - end_date: End date for the data download (YYYY-MM-DD).
     
     Returns:
     - DataFrame containing the daily stock data.
     """
-
     # Download the data
-    # data = yf.download(tickers, start=start_date, end=end_date, interval='1d', auto_adjust=False)['Adj Close']
-    data = yf.download(tickers, start=start_date, end=end_date, interval='1d', auto_adjust=True)
+    data = yf.download(ticker, start=start_date, end=end_date, interval='1d', auto_adjust=True)
+
+    # Debug: Spalten ausgeben
+    print(f"Spalten für {ticker}: {data.columns.tolist()}")
     
     # Check if any data was returned
     if data.empty:
-        raise ValueError("No data returned. Please check the tickers and date range.")
-      
-    # Select OLHCV columns
-    olhcv_data = data[['Open', 'Low', 'High', 'Close', 'Volume']]
+        raise ValueError(f"No data returned for ticker {ticker}. Please check the ticker and date range.")
+    
+    # Ensure the required columns are present
+    required_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+    for col in required_columns:
+        if col not in data.columns:
+            raise ValueError(f"Missing required column '{col}' in data for ticker {ticker}.")
+    
+    # Select only the required columns
+    olhcv_data = data[required_columns]
+    
+    # Ensure the index is a DatetimeIndex
+    if not isinstance(olhcv_data.index, pd.DatetimeIndex):
+        raise ValueError(f"Index is not a DatetimeIndex for ticker {ticker}.")
+    
+    return olhcv_data
     
     # data object mit mehreren paramtern versehen, für Splits, Dividends, etc.
     # olhcv_data['Splits'] = data['Splits']
     
     # Rename columns to match OLHCV format
     # olhcv_data.columns = ['Open', 'Low', 'High', 'Close', 'Volume']
-    
-    return olhcv_data
 
 if __name__ == "__main__":
     # Liste von Tickersymbolen, die getestet werden sollen
